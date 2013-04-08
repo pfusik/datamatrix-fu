@@ -1,0 +1,4 @@
+*.exe
+/datamatrix.c
+/datamatrix.h
+/datamatrix.js

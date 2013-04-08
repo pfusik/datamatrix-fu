@@ -1,0 +1,487 @@
+// DataMatrixEncoder.ci
+//
+// Copyright (C) 2013  Piotr Fusik
+//
+// This file is part of DataMatrix.ci, see http://github.com/pfusik/datamatrix-ci
+//
+// DataMatrix.ci is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// DataMatrix.ci is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with DataMatrix.ci.  If not, see http://www.gnu.org/licenses/
+
+/// Encoder for an ECC 200 Data Matrix barcode.
+/// Usage:
+/// * Call `SetSize` with the desired barcode size or call `SetAutoSize` to select the smallest barcode.
+/// * Call `Encode` with the message text.
+/// * If using `SetAutoSize`, obtain the selected barcode size with `GetColumns` and `GetRows`.
+/// * For each row and column, call `GetModule`.
+///
+/// The encoder object may be later used for other barcodes.
+public class DataMatrixEncoder
+{
+	const int SquareSizes = 24;
+	const int Sizes = SquareSizes + 6;
+	const byte[] SymbolColumns     = { 10, 12, 14, 16, 18, 20, 22, 24, 26, 32, 36,  40,  44,  48,  52,  64,  72,  80,  88,  96, 104,  120,  132,  144, 18, 32, 26, 36, 36, 48 };
+	const byte[] SymbolRows        = { 10, 12, 14, 16, 18, 20, 22, 24, 26, 32, 36,  40,  44,  48,  52,  64,  72,  80,  88,  96, 104,  120,  132,  144,  8,  8, 12, 12, 16, 16 };
+	const byte[] HorizontalRegions = {  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,   2,   2,   2,   2,   4,   4,   4,   4,   4,   4,    6,    6,    6,  1,  2,  1,  2,  2,  2 };
+	const byte[] VerticalRegions   = {  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,   2,   2,   2,   2,   4,   4,   4,   4,   4,   4,    6,    6,    6,  1,  1,  1,  1,  1,  1 };
+	const  int[] DataCodewords     = {  3,  5,  8, 12, 18, 22, 30, 36, 44, 62, 86, 114, 144, 174, 204, 280, 368, 456, 576, 696, 816, 1050, 1304, 1558,  5, 10, 16, 22, 32, 49 };
+	const byte[] ErrorCodewords    = {  5,  7, 10, 12, 14, 18, 20, 24, 28, 36, 42,  48,  56,  68,  42,  56,  36,  48,  56,  68,  56,   68,   62,   62,  7, 11, 14, 18, 24, 28 };
+	const byte[] InterleavedBlocks = {  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,   1,   1,   1,   2,   2,   4,   4,   4,   4,   6,    6,    8,   10,  1,  1,  1,  1,  1,  1 };
+
+	/// Symbol size id between 0 and `Sizes-1`.
+	int Size;
+
+	/// `Encode` selects smallest symbol for message?
+	bool AutoSize;
+
+	/// `true` means `AutoSize` selects a square symbol, `false` means it selects a rectangular symbol.
+	bool AutoSquareSize;
+
+	/// Constructs the encoder.
+	/// The encoder is initialized to select the smallest square symbol for the message,
+	/// as if `SetAutoSize(true)` were called.
+	public DataMatrixEncoder()
+	{
+		AutoSize = AutoSquareSize = true;
+	}
+
+	/// Sets symbol size.
+	/// Must be called before `Encode`.
+	public void SetSize(
+		/// Number of modules horizontally.
+		int columns,
+		/// Number of modules vertically.
+		int rows)
+	{
+		for (int i = 0; i < Sizes; i++) {
+			if (SymbolColumns[i] == columns && SymbolRows[i] == rows) {
+				Size = i;
+				AutoSize = false;
+				return;
+			}
+		}
+		throw "Invalid size";
+	}
+
+	/// Instructs `Encode` to select smallest symbol for message.
+	public void SetAutoSize(
+		/// `true` means selects a square symbol, `false` means select a rectangular symbol.
+		bool square)
+	{
+		AutoSize = true;
+		AutoSquareSize = square;
+	}
+
+	const int MaxDataCodewords = 1558;
+
+	/// Longest message we can possibly encode.
+	/// This is assuming digits only, which we can store two per codeword.
+	public const int MaxMessageLength = MaxDataCodewords * 2;
+
+	/// Encodes message in codewords.
+	/// Returns number of used codewords.
+	static int EncodeMessage(
+		/// Message to encode.
+		string message,
+		/// Result.
+		byte[] codewords)
+	{
+		int messageLength = message.Length;
+		if (messageLength > MaxMessageLength)
+			throw "Message too long";
+
+		int j = 0;
+		for (int i = 0; i < messageLength; i++) {
+			int c = message[i];
+			if (c >= 128) {
+				if (c >= 256)
+					throw "Unsupported Unicode character";
+				codewords[j++] = 235;
+				codewords[j++] = c - 127;
+				continue;
+			}
+			if (c >= '0' && c <= '9' && i + 1 < messageLength) {
+				int d = message[i + 1];
+				if (d >= '0' && d <= '9') {
+					i++;
+					codewords[j++] = 130 + (c - '0') * 10 + d - '0';
+					continue;
+				}
+			}
+			codewords[j++] = c + 1;
+		}
+		return j;
+	}
+
+	/// Selects smallest symbol size that has at least `codewordsLength` data codewords.
+	void FitSize(
+		/// Number of codewords.
+		int codewordsLength)
+	{
+		// Rectangular symbols have less codewords than square ones,
+		// so it is safe to always iterate over them.
+		for (int i = AutoSquareSize ? 0 : SquareSizes; i < Sizes; i++) {
+			if (DataCodewords[i] >= codewordsLength) {
+				Size = i;
+				return;
+			}
+		}
+		throw "Message too long";
+	}
+
+	/// Adds data codewords padding.
+	void PadCodewords(
+		/// Number of used data codewords.
+		int codewordsLength,
+		/// Input and result.
+		byte[] codewords)
+	{
+		int dataCodewords = DataCodewords[Size];
+		if (codewordsLength < dataCodewords) {
+			codewords[codewordsLength++] = 129;
+			while (codewordsLength < dataCodewords) {
+				int pad = 130 + (codewordsLength + 1) * 149 % 253;
+				if (pad > 254)
+					pad -= 254;
+				codewords[codewordsLength++] = pad;
+			}
+		}
+	}
+
+	/// Calculates Reed-Solomon error correction code.
+	void CalculateReedSolomonCode(
+		/// Input and result.
+		byte[] codewords)
+	{
+		// Calculate discrete exponentation and logarithm lookup tables.
+		byte[511] exp;
+		byte[256] log;
+		int e = 1;
+		for (int x = 0; x < 256; x++) {
+			exp[255 + x] = exp[x] = e;
+			log[e] = x;
+			e <<= 1;
+			if (e >= 256)
+				e ^= 301;
+		}
+
+		int dataCodewords = DataCodewords[Size];
+		int errorCodewords = ErrorCodewords[Size];
+		// Calculate generator polynomial.
+		const int maxErrorCodewords = 68;
+		byte[maxErrorCodewords + 1] poly;
+		poly[0] = 1; // no need to initialize other array entries here
+		for (int i = 1; i <= errorCodewords; i++) {
+			poly[i] = poly[i - 1];
+			for (int j = i - 1; j >= 0; j--) {
+				int k = exp[log[poly[j]] + i];
+				if (j > 0)
+					k ^= poly[j - 1];
+				poly[j] = k;
+			}
+		}
+		// Precalculate discrete logarithms of polynomial coefficients.
+		// Polynomial coefficients are never zero.
+		for (int i = 0; i < errorCodewords; i++)
+			poly[i] = log[poly[i]];
+
+		int blocks = InterleavedBlocks[Size];
+		int totalCodewords = dataCodewords + blocks * errorCodewords;
+		// Initialize checkwords to zero.
+		for (int i = dataCodewords; i < totalCodewords; i++)
+			codewords[i] = 0;
+		// For each interleaved block...
+		for (int block = 0; block < blocks; block++) {
+			// For each data codeword in the block...
+			for (int i = block; i < dataCodewords; i += blocks) {
+				// Update all checkwords.
+				int j = dataCodewords + block;
+				int k = codewords[j] ^ codewords[i];
+				for (int l = errorCodewords; --l >= 0; j += blocks) {
+					int checkword = k == 0 ? 0 : exp[log[k] + poly[l]];
+					if (j + blocks < totalCodewords)
+						checkword ^= codewords[j + blocks];
+					codewords[j] = checkword;
+				}
+			}
+		}
+	}
+
+	const int MaxMatrixColumns = 132;
+	const int MaxMatrixRows = 132;
+
+	/// Data modules, as zeros and ones.
+	byte[MaxMatrixColumns * MaxMatrixRows] Matrix;
+
+	/// Sets the specified module.
+	void SetModule(
+		/// Horizontal position.
+		int column,
+		/// Vertical position.
+		int row,
+		/// Lowest bit is the module value.
+		int value)
+	{
+		Matrix[row * MaxMatrixColumns + column] = value & 1;
+	}
+
+	/// Sets the specified module, applying wrapping for negative coordinates.
+	void SetModuleWrapped(
+		/// Horizontal position.
+		int column,
+		/// Vertical position.
+		int row,
+		/// Horizontal matrix size.
+		int matrixColumns,
+		/// Vertical matrix size.
+		int matrixRows,
+		/// Lowest bit is the module value.
+		int value)
+	{
+		if (row < 0) {
+			row += matrixRows;
+			column += 4 - (matrixRows + 4 & 7);
+		}
+		if (column < 0) {
+			column += matrixColumns;
+			row += 4 - (matrixColumns + 4 & 7);
+		}
+		SetModule(column, row, value);
+	}
+
+	/// Sets the standard L-shaped tile.
+	void SetUtah(
+		/// Horizontal position.
+		int column,
+		/// Vertical position.
+		int row,
+		/// Horizontal matrix size.
+		int matrixColumns,
+		/// Vertical matrix size.
+		int matrixRows,
+		/// 8-bit value.
+		int value)
+	{
+		SetModuleWrapped(column - 2, row - 2, matrixColumns, matrixRows, value >> 7);
+		SetModuleWrapped(column - 1, row - 2, matrixColumns, matrixRows, value >> 6);
+		SetModuleWrapped(column - 2, row - 1, matrixColumns, matrixRows, value >> 5);
+		SetModuleWrapped(column - 1, row - 1, matrixColumns, matrixRows, value >> 4);
+		SetModuleWrapped(column, row - 1, matrixColumns, matrixRows, value >> 3);
+		SetModuleWrapped(column - 2, row, matrixColumns, matrixRows, value >> 2);
+		SetModuleWrapped(column - 1, row, matrixColumns, matrixRows, value >> 1);
+		SetModuleWrapped(column, row, matrixColumns, matrixRows, value);
+	}
+
+	/// Sets "case 1" corner tile.
+	void SetCorner1(
+		/// Horizontal matrix size.
+		int matrixColumns,
+		/// Vertical matrix size.
+		int matrixRows,
+		/// 8-bit value.
+		int value)
+	{
+		SetModule(0, matrixRows - 1, value >> 7);
+		SetModule(1, matrixRows - 1, value >> 6);
+		SetModule(2, matrixRows - 1, value >> 5);
+		SetModule(matrixColumns - 2, 0, value >> 4);
+		SetModule(matrixColumns - 1, 0, value >> 3);
+		SetModule(matrixColumns - 1, 1, value >> 2);
+		SetModule(matrixColumns - 1, 2, value >> 1);
+		SetModule(matrixColumns - 1, 3, value);
+	}
+
+	/// Sets "case 2" corner tile.
+	void SetCorner2(
+		/// Horizontal matrix size.
+		int matrixColumns,
+		/// Vertical matrix size.
+		int matrixRows,
+		/// 8-bit value.
+		int value)
+	{
+		SetModule(0, matrixRows - 3, value >> 7);
+		SetModule(0, matrixRows - 2, value >> 6);
+		SetModule(0, matrixRows - 1, value >> 5);
+		SetModule(matrixColumns - 4, 0, value >> 4);
+		SetModule(matrixColumns - 3, 0, value >> 3);
+		SetModule(matrixColumns - 2, 0, value >> 2);
+		SetModule(matrixColumns - 1, 0, value >> 1);
+		SetModule(matrixColumns - 1, 1, value);
+	}
+
+	/// Sets "case 3" corner tile.
+	void SetCorner3(
+		/// Horizontal matrix size.
+		int matrixColumns,
+		/// Vertical matrix size.
+		int matrixRows,
+		/// 8-bit value.
+		int value)
+	{
+		SetModule(0, matrixRows - 3, value >> 7);
+		SetModule(0, matrixRows - 2, value >> 6);
+		SetModule(0, matrixRows - 1, value >> 5);
+		SetModule(matrixColumns - 2, 0, value >> 4);
+		SetModule(matrixColumns - 1, 0, value >> 3);
+		SetModule(matrixColumns - 1, 1, value >> 2);
+		SetModule(matrixColumns - 1, 2, value >> 1);
+		SetModule(matrixColumns - 1, 3, value);
+	}
+
+	/// Sets "case 4" corner tile.
+	void SetCorner4(
+		/// Horizontal matrix size.
+		int matrixColumns,
+		/// Vertical matrix size.
+		int matrixRows,
+		/// 8-bit value.
+		int value)
+	{
+		SetModule(0, matrixRows - 1, value >> 7);
+		SetModule(matrixColumns - 1, matrixRows - 1, value >> 6);
+		SetModule(matrixColumns - 3, 0, value >> 5);
+		SetModule(matrixColumns - 2, 0, value >> 4);
+		SetModule(matrixColumns - 1, 0, value >> 3);
+		SetModule(matrixColumns - 3, 1, value >> 2);
+		SetModule(matrixColumns - 2, 1, value >> 1);
+		SetModule(matrixColumns - 1, 1, value);
+	}
+
+	/// Value of yet-unset modules.
+	const byte InvalidModule = 2;
+
+	/// Populates `Matrix` with `codewords`.
+	void FillMatrix(
+		/// Input.
+		byte[] codewords)
+	{
+		int matrixColumns = SymbolColumns[Size] - HorizontalRegions[Size] * 2;
+		int matrixRows = SymbolRows[Size] - VerticalRegions[Size] * 2;
+		// Initialize modules to unset.
+		for (int row = 0; row < matrixRows; row++)
+			for (int column = 0; column < matrixColumns; column++)
+				Matrix[row * MaxMatrixColumns + column] = InvalidModule;
+
+		int codewordsIndex = 0;
+		int column = 0;
+		int row = 4;
+		do {
+			// Check corner cases.
+			if (column == 0) {
+				if (row == matrixRows)
+					SetCorner1(matrixColumns, matrixRows, codewords[codewordsIndex++]);
+				else if (row == matrixRows - 2) {
+					if ((matrixColumns & 3) != 0)
+						SetCorner2(matrixColumns, matrixRows, codewords[codewordsIndex++]);
+					else if ((matrixColumns & 7) == 4)
+						SetCorner3(matrixColumns, matrixRows, codewords[codewordsIndex++]);
+				}
+			}
+			else if (column == 2 && row == matrixRows + 4 && (matrixColumns & 7) == 0)
+				SetCorner4(matrixColumns, matrixRows, codewords[codewordsIndex++]);
+
+			// Sweep upward-right.
+			do {
+				if (column >= 0 && row < matrixRows && Matrix[row * MaxMatrixColumns + column] == InvalidModule)
+					SetUtah(column, row, matrixColumns, matrixRows, codewords[codewordsIndex++]);
+				column += 2;
+				row -= 2;
+			} while (column < matrixColumns && row >= 0);
+			column += 3;
+			row++;
+
+			// Sweep downward-left.
+			do {
+				if (column < matrixColumns && row >= 0 && Matrix[row * MaxMatrixColumns + column] == InvalidModule)
+					SetUtah(column, row, matrixColumns, matrixRows, codewords[codewordsIndex++]);
+				column -= 2;
+				row += 2;
+			} while (column >= 0 && row < matrixRows);
+			column++;
+			row += 3;
+
+		} while (column < matrixColumns || row < matrixRows);
+
+		if (Matrix[(matrixRows - 1) * MaxMatrixColumns + matrixColumns - 1] == InvalidModule) {
+			// Fixed pattern in the bottom-right corner.
+			Matrix[(matrixRows - 2) * MaxMatrixColumns + matrixColumns - 2] = 1;
+			Matrix[(matrixRows - 2) * MaxMatrixColumns + matrixColumns - 1] = 0;
+			Matrix[(matrixRows - 1) * MaxMatrixColumns + matrixColumns - 2] = 0;
+			Matrix[(matrixRows - 1) * MaxMatrixColumns + matrixColumns - 1] = 1;
+		}
+	}
+
+	/// Encodes the specified message.
+	public void Encode(string message)
+	{
+		byte[MaxMessageLength * 2] codewords; // worst case are all high-bit characters
+		int messageCodewords = EncodeMessage(message, codewords);
+		if (AutoSize)
+			FitSize(messageCodewords);
+		else if (messageCodewords > DataCodewords[Size])
+			throw "Message too long for this symbol size";
+		PadCodewords(messageCodewords, codewords);
+		CalculateReedSolomonCode(codewords);
+		FillMatrix(codewords);
+	}
+
+	/// Returns horizontal symbol size.
+	public int GetColumns()
+	{
+		return SymbolColumns[Size];
+	}
+
+	/// Returns vertical symbol size.
+	public int GetRows()
+	{
+		return SymbolRows[Size];
+	}
+
+	/// Returns module at the specified position.
+	/// For the standard "dark on light" scheme
+	/// (with a dark L-shaped alignment pattern),
+	/// returns 0 for a light module and 1 for a dark module.
+	public int GetModule(
+		/// Horizontal position, between 0 and `GetColumns()`.
+		int column,
+		/// Vertical position, between 0 and `GetRows()`.
+		int row)
+	{
+		int symbolColumns = SymbolColumns[Size];
+		int symbolRows = SymbolRows[Size];
+		if (column < 0 || column >= symbolColumns
+		 || row < 0 || row >= symbolRows)
+			throw "Coordinates out of bounds";
+
+		int regionColumns = symbolColumns / HorizontalRegions[Size];
+		int regionRows = symbolRows / VerticalRegions[Size];
+
+		// Solid portion of alignment patterns.
+		if ((row + 1) % regionRows == 0
+		 || column % regionColumns == 0)
+			return 1;
+
+		// Horizontal calibration bars.
+		if (row % regionRows == 0)
+			return ~column & 1;
+
+		// Vertical calibration bars.
+		if ((column + 1) % regionColumns == 0)
+			return row & 1;
+
+		// Data modules.
+		column -= 1 + column / regionColumns * 2;
+		row -= 1 + row / regionRows * 2;
+		return Matrix[row * MaxMatrixColumns + column];
+	}
+}
