@@ -392,7 +392,7 @@ public class DataMatrixEncoder
 
 			// Sweep upward-right.
 			do {
-				if (column >= 0 && row < matrixRows && Matrix[row * MaxMatrixColumns + column] == InvalidModule)
+				if (row < matrixRows && Matrix[row * MaxMatrixColumns + column] == InvalidModule)
 					SetUtah(column, row, matrixColumns, matrixRows, codewords[codewordsIndex++]);
 				column += 2;
 				row -= 2;
@@ -412,7 +412,7 @@ public class DataMatrixEncoder
 
 		} while (column < matrixColumns || row < matrixRows);
 
-		if (Matrix[(matrixRows - 1) * MaxMatrixColumns + matrixColumns - 1] == InvalidModule) {
+		if (row == matrixRows + 6) {
 			// Fixed pattern in the bottom-right corner.
 			Matrix[(matrixRows - 2) * MaxMatrixColumns + matrixColumns - 2] = 1;
 			Matrix[(matrixRows - 2) * MaxMatrixColumns + matrixColumns - 1] = 0;
