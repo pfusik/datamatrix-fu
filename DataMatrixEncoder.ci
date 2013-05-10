@@ -40,7 +40,7 @@ public class DataMatrixEncoder
 	/// Symbol size id between 0 and `Sizes-1`.
 	int Size;
 
-	/// `Encode` selects smallest symbol for message?
+	/// Does `Encode` select smallest symbol for message?
 	bool AutoSize;
 
 	/// `true` means `AutoSize` selects a square symbol, `false` means it selects a rectangular symbol.
@@ -74,7 +74,7 @@ public class DataMatrixEncoder
 
 	/// Instructs `Encode` to select smallest symbol for message.
 	public void SetAutoSize(
-		/// `true` means selects a square symbol, `false` means select a rectangular symbol.
+		/// `true` means select a square symbol, `false` means select a rectangular symbol.
 		bool square)
 	{
 		AutoSize = true;
@@ -87,7 +87,7 @@ public class DataMatrixEncoder
 	/// This is assuming digits only, which we can store two per codeword.
 	public const int MaxMessageLength = MaxDataCodewords * 2;
 
-	/// Encodes message in codewords.
+	/// Encodes `message` in `codewords`.
 	/// Returns number of used codewords.
 	static int EncodeMessage(
 		/// Message to encode.
@@ -122,15 +122,15 @@ public class DataMatrixEncoder
 		return j;
 	}
 
-	/// Selects smallest symbol size that has at least `codewordsLength` data codewords.
+	/// Selects smallest symbol size that has at least `usedCodewords` data codewords.
 	void FitSize(
 		/// Number of codewords.
-		int codewordsLength)
+		int usedCodewords)
 	{
 		// Rectangular symbols have less codewords than square ones,
 		// so it is safe to always iterate over them.
 		for (int i = AutoSquareSize ? 0 : SquareSizes; i < Sizes; i++) {
-			if (DataCodewords[i] >= codewordsLength) {
+			if (DataCodewords[i] >= usedCodewords) {
 				Size = i;
 				return;
 			}
@@ -138,21 +138,21 @@ public class DataMatrixEncoder
 		throw "Message too long";
 	}
 
-	/// Adds data codewords padding.
+	/// Adds padding to data codewords.
 	void PadCodewords(
 		/// Number of used data codewords.
-		int codewordsLength,
+		int usedCodewords,
 		/// Input and result.
 		byte[] codewords)
 	{
 		int dataCodewords = DataCodewords[Size];
-		if (codewordsLength < dataCodewords) {
-			codewords[codewordsLength++] = 129;
-			while (codewordsLength < dataCodewords) {
-				int pad = 130 + (codewordsLength + 1) * 149 % 253;
+		if (usedCodewords < dataCodewords) {
+			codewords[usedCodewords++] = 129;
+			while (usedCodewords < dataCodewords) {
+				int pad = 130 + (usedCodewords + 1) * 149 % 253;
 				if (pad > 254)
 					pad -= 254;
-				codewords[codewordsLength++] = pad;
+				codewords[usedCodewords++] = pad;
 			}
 		}
 	}
