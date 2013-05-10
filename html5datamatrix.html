@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>HTML5 Data Matrix Encoder</title>
+	<style type="text/css">
+		canvas { float: right; margin: 16px; }
+		.error { background-color: red; }
+	</style>
+	<script src="datamatrix.js" type="text/javascript"></script>
+	<script src="html5datamatrix.js" type="text/javascript"></script>
+</head>
+<body onload="redraw()">
+	<canvas id="canvas" width="480" height="480"></canvas>
+	<h1>HTML5 Data Matrix Encoder</h1>
+	<p>Type text below to instantly encode it as a Data Matrix barcode. Encoding takes place in your browser, nothing is sent to a server.</p>
+	<textarea id="message" cols="60" rows="20" oninput="redraw()" onpropertychange="redraw()" onkeyup="redraw()">Hello, world!</textarea>
+	<div id="status"></div>
+</body>
