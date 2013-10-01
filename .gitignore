@@ -1,6 +1,8 @@
 *.exe
+*.class
 /datamatrix.c
 /datamatrix.h
 /datamatrix.cs
+/DataMatrixEncoder.java
 /datamatrix.js
 /DataMatrix.pm
