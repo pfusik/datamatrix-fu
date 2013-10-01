@@ -10,4 +10,5 @@ I made an attempt to support ISO 8859-1, but I'm not sure whether it's correct.
 
 Future version will support other encodings and perhaps a decoder.
 
-Try the [HTML 5 encoder](http://pfusik.github.com/datamatrix-ci/html5datamatrix.html) right in your browser.
+Try the [HTML 5 encoder](http://pfusik.github.io/datamatrix-ci/html5datamatrix.html) right in your browser.
+Other sample programs print the barcodes in the terminal, as hashes and spaces.
