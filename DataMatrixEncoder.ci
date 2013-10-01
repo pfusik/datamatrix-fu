@@ -367,14 +367,16 @@ public class DataMatrixEncoder
 	{
 		int matrixColumns = SymbolColumns[Size] - HorizontalRegions[Size] * 2;
 		int matrixRows = SymbolRows[Size] - VerticalRegions[Size] * 2;
+		int column;
+		int row;
 		// Initialize modules to unset.
-		for (int row = 0; row < matrixRows; row++)
-			for (int column = 0; column < matrixColumns; column++)
+		for (row = 0; row < matrixRows; row++)
+			for (column = 0; column < matrixColumns; column++)
 				Matrix[row * MaxMatrixColumns + column] = InvalidModule;
 
 		int codewordsIndex = 0;
-		int column = 0;
-		int row = 4;
+		column = 0;
+		row = 4;
 		do {
 			// Check corner cases.
 			if (column == 0) {

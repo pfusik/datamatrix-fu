@@ -1,5 +1,6 @@
 *.exe
 /datamatrix.c
 /datamatrix.h
+/datamatrix.cs
 /datamatrix.js
 /DataMatrix.pm
