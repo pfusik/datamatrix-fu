@@ -1,6 +1,6 @@
 // DataMatrixEncoder.ci
 //
-// Copyright (C) 2013  Piotr Fusik
+// Copyright (C) 2013-2019  Piotr Fusik
 //
 // This file is part of DataMatrix.ci, see http://github.com/pfusik/datamatrix-ci
 //
@@ -41,26 +41,26 @@ public class DataMatrixEncoder
 	int Size;
 
 	/// Does `Encode` select smallest symbol for message?
-	bool AutoSize;
+	bool AutoSize = true;
 
 	/// `true` means `AutoSize` selects a square symbol, `false` means it selects a rectangular symbol.
-	bool AutoSquareSize;
+	bool AutoSquareSize = true;
 
 	/// Constructs the encoder.
 	/// The encoder is initialized to select the smallest square symbol for the message,
 	/// as if `SetAutoSize(true)` were called.
 	public DataMatrixEncoder()
 	{
-		AutoSize = AutoSquareSize = true;
 	}
 
 	/// Sets symbol size.
 	/// Must be called before `Encode`.
-	public void SetSize(
+	public void SetSize!(
 		/// Number of modules horizontally.
 		int columns,
 		/// Number of modules vertically.
 		int rows)
+		throws
 	{
 		for (int i = 0; i < Sizes; i++) {
 			if (SymbolColumns[i] == columns && SymbolRows[i] == rows) {
@@ -73,7 +73,7 @@ public class DataMatrixEncoder
 	}
 
 	/// Instructs `Encode` to select smallest symbol for message.
-	public void SetAutoSize(
+	public void SetAutoSize!(
 		/// `true` means select a square symbol, `false` means select a rectangular symbol.
 		bool square)
 	{
@@ -93,7 +93,8 @@ public class DataMatrixEncoder
 		/// Message to encode.
 		string message,
 		/// Result.
-		byte[] codewords)
+		byte[]! codewords)
+		throws
 	{
 		int messageLength = message.Length;
 		if (messageLength > MaxMessageLength)
@@ -123,9 +124,10 @@ public class DataMatrixEncoder
 	}
 
 	/// Selects smallest symbol size that has at least `usedCodewords` data codewords.
-	void FitSize(
+	void FitSize!(
 		/// Number of codewords.
 		int usedCodewords)
+		throws
 	{
 		// Rectangular symbols have less codewords than square ones,
 		// so it is safe to always iterate over them.
@@ -143,7 +145,7 @@ public class DataMatrixEncoder
 		/// Number of used data codewords.
 		int usedCodewords,
 		/// Input and result.
-		byte[] codewords)
+		byte[]! codewords)
 	{
 		int dataCodewords = DataCodewords[Size];
 		if (usedCodewords < dataCodewords) {
@@ -160,7 +162,7 @@ public class DataMatrixEncoder
 	/// Calculates Reed-Solomon error correction code.
 	void CalculateReedSolomonCode(
 		/// Input and result.
-		byte[] codewords)
+		byte[]! codewords)
 	{
 		// Calculate discrete exponentation and logarithm lookup tables.
 		byte[511] exp;
@@ -223,7 +225,7 @@ public class DataMatrixEncoder
 	byte[MaxMatrixColumns * MaxMatrixRows] Matrix;
 
 	/// Sets the specified module.
-	void SetModule(
+	void SetModule!(
 		/// Horizontal position.
 		int column,
 		/// Vertical position.
@@ -235,7 +237,7 @@ public class DataMatrixEncoder
 	}
 
 	/// Sets the specified module, applying wrapping for negative coordinates.
-	void SetModuleWrapped(
+	void SetModuleWrapped!(
 		/// Horizontal position.
 		int column,
 		/// Vertical position.
@@ -259,7 +261,7 @@ public class DataMatrixEncoder
 	}
 
 	/// Sets the standard L-shaped tile.
-	void SetUtah(
+	void SetUtah!(
 		/// Horizontal position.
 		int column,
 		/// Vertical position.
@@ -282,7 +284,7 @@ public class DataMatrixEncoder
 	}
 
 	/// Sets "case 1" corner tile.
-	void SetCorner1(
+	void SetCorner1!(
 		/// Horizontal matrix size.
 		int matrixColumns,
 		/// Vertical matrix size.
@@ -301,7 +303,7 @@ public class DataMatrixEncoder
 	}
 
 	/// Sets "case 2" corner tile.
-	void SetCorner2(
+	void SetCorner2!(
 		/// Horizontal matrix size.
 		int matrixColumns,
 		/// Vertical matrix size.
@@ -320,7 +322,7 @@ public class DataMatrixEncoder
 	}
 
 	/// Sets "case 3" corner tile.
-	void SetCorner3(
+	void SetCorner3!(
 		/// Horizontal matrix size.
 		int matrixColumns,
 		/// Vertical matrix size.
@@ -339,7 +341,7 @@ public class DataMatrixEncoder
 	}
 
 	/// Sets "case 4" corner tile.
-	void SetCorner4(
+	void SetCorner4!(
 		/// Horizontal matrix size.
 		int matrixColumns,
 		/// Vertical matrix size.
@@ -361,7 +363,7 @@ public class DataMatrixEncoder
 	const byte InvalidModule = 2;
 
 	/// Populates `Matrix` with `codewords`.
-	void FillMatrix(
+	void FillMatrix!(
 		/// Input.
 		byte[] codewords)
 	{
@@ -424,7 +426,8 @@ public class DataMatrixEncoder
 	}
 
 	/// Encodes the specified message.
-	public void Encode(string message)
+	public void Encode!(string message)
+		throws
 	{
 		byte[MaxMessageLength * 2] codewords; // worst case are all high-bit characters
 		int messageCodewords = EncodeMessage(message, codewords);
@@ -438,16 +441,10 @@ public class DataMatrixEncoder
 	}
 
 	/// Returns horizontal symbol size.
-	public int GetColumns()
-	{
-		return SymbolColumns[Size];
-	}
+	public int GetColumns() => SymbolColumns[Size];
 
 	/// Returns vertical symbol size.
-	public int GetRows()
-	{
-		return SymbolRows[Size];
-	}
+	public int GetRows() => SymbolRows[Size];
 
 	/// Returns module at the specified position.
 	/// For the standard "dark on light" scheme
@@ -458,6 +455,7 @@ public class DataMatrixEncoder
 		int column,
 		/// Vertical position, between 0 and `GetRows()`.
 		int row)
+		throws
 	{
 		int symbolColumns = SymbolColumns[Size];
 		int symbolRows = SymbolRows[Size];
