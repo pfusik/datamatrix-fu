@@ -17,7 +17,7 @@ dmaa-cs.exe: dmaa.cs datamatrix.cs
 	csc -nologo -o+ -out:$@ $^
 
 datamatrix.c DataMatrixEncoder.java datamatrix.cs datamatrix.js: DataMatrixEncoder.ci
-	cito1 -o $@ $<
+	cito -o $@ $<
 
 clean:
 	rm -f dmaa.exe DataMatrixAsciiArtEncoder.class DataMatrixEncoder.class dmaa-cs.exe datamatrix.c datamatrixci.cs datamatrixci.js
