@@ -29,13 +29,13 @@ public class DataMatrixEncoder
 {
 	const int SquareSizes = 24;
 	const int Sizes = SquareSizes + 6;
-	const byte[] SymbolColumns     = { 10, 12, 14, 16, 18, 20, 22, 24, 26, 32, 36,  40,  44,  48,  52,  64,  72,  80,  88,  96, 104,  120,  132,  144, 18, 32, 26, 36, 36, 48 };
-	const byte[] SymbolRows        = { 10, 12, 14, 16, 18, 20, 22, 24, 26, 32, 36,  40,  44,  48,  52,  64,  72,  80,  88,  96, 104,  120,  132,  144,  8,  8, 12, 12, 16, 16 };
-	const byte[] HorizontalRegions = {  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,   2,   2,   2,   2,   4,   4,   4,   4,   4,   4,    6,    6,    6,  1,  2,  1,  2,  2,  2 };
-	const byte[] VerticalRegions   = {  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,   2,   2,   2,   2,   4,   4,   4,   4,   4,   4,    6,    6,    6,  1,  1,  1,  1,  1,  1 };
-	const  int[] DataCodewords     = {  3,  5,  8, 12, 18, 22, 30, 36, 44, 62, 86, 114, 144, 174, 204, 280, 368, 456, 576, 696, 816, 1050, 1304, 1558,  5, 10, 16, 22, 32, 49 };
-	const byte[] ErrorCodewords    = {  5,  7, 10, 12, 14, 18, 20, 24, 28, 36, 42,  48,  56,  68,  42,  56,  36,  48,  56,  68,  56,   68,   62,   62,  7, 11, 14, 18, 24, 28 };
-	const byte[] InterleavedBlocks = {  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,   1,   1,   1,   2,   2,   4,   4,   4,   4,   6,    6,    8,   10,  1,  1,  1,  1,  1,  1 };
+	const  byte[] SymbolColumnsBySize     = { 10, 12, 14, 16, 18, 20, 22, 24, 26, 32, 36,  40,  44,  48,  52,  64,  72,  80,  88,  96, 104,  120,  132,  144, 18, 32, 26, 36, 36, 48 };
+	const  byte[] SymbolRowsBySize        = { 10, 12, 14, 16, 18, 20, 22, 24, 26, 32, 36,  40,  44,  48,  52,  64,  72,  80,  88,  96, 104,  120,  132,  144,  8,  8, 12, 12, 16, 16 };
+	const  byte[] HorizontalRegionsBySize = {  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,   2,   2,   2,   2,   4,   4,   4,   4,   4,   4,    6,    6,    6,  1,  2,  1,  2,  2,  2 };
+	const  byte[] VerticalRegionsBySize   = {  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,   2,   2,   2,   2,   4,   4,   4,   4,   4,   4,    6,    6,    6,  1,  1,  1,  1,  1,  1 };
+	const short[] DataCodewordsBySize     = {  3,  5,  8, 12, 18, 22, 30, 36, 44, 62, 86, 114, 144, 174, 204, 280, 368, 456, 576, 696, 816, 1050, 1304, 1558,  5, 10, 16, 22, 32, 49 };
+	const  byte[] ErrorCodewordsBySize    = {  5,  7, 10, 12, 14, 18, 20, 24, 28, 36, 42,  48,  56,  68,  42,  56,  36,  48,  56,  68,  56,   68,   62,   62,  7, 11, 14, 18, 24, 28 };
+	const  byte[] InterleavedBlocksBySize = {  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,   1,   1,   1,   2,   2,   4,   4,   4,   4,   6,    6,    8,   10,  1,  1,  1,  1,  1,  1 };
 
 	/// Symbol size id between 0 and `Sizes-1`.
 	int Size;
@@ -63,7 +63,7 @@ public class DataMatrixEncoder
 		throws
 	{
 		for (int i = 0; i < Sizes; i++) {
-			if (SymbolColumns[i] == columns && SymbolRows[i] == rows) {
+			if (SymbolColumnsBySize[i] == columns && SymbolRowsBySize[i] == rows) {
 				Size = i;
 				AutoSize = false;
 				return;
@@ -132,7 +132,7 @@ public class DataMatrixEncoder
 		// Rectangular symbols have less codewords than square ones,
 		// so it is safe to always iterate over them.
 		for (int i = AutoSquareSize ? 0 : SquareSizes; i < Sizes; i++) {
-			if (DataCodewords[i] >= usedCodewords) {
+			if (DataCodewordsBySize[i] >= usedCodewords) {
 				Size = i;
 				return;
 			}
@@ -147,7 +147,7 @@ public class DataMatrixEncoder
 		/// Input and result.
 		byte[]! codewords)
 	{
-		int dataCodewords = DataCodewords[Size];
+		int dataCodewords = DataCodewordsBySize[Size];
 		if (usedCodewords < dataCodewords) {
 			codewords[usedCodewords++] = 129;
 			while (usedCodewords < dataCodewords) {
@@ -176,8 +176,8 @@ public class DataMatrixEncoder
 				e ^= 301;
 		}
 
-		int dataCodewords = DataCodewords[Size];
-		int errorCodewords = ErrorCodewords[Size];
+		int dataCodewords = DataCodewordsBySize[Size];
+		int errorCodewords = ErrorCodewordsBySize[Size];
 		// Calculate generator polynomial.
 		const int maxErrorCodewords = 68;
 		byte[maxErrorCodewords + 1] poly;
@@ -196,7 +196,7 @@ public class DataMatrixEncoder
 		for (int i = 0; i < errorCodewords; i++)
 			poly[i] = log[poly[i]];
 
-		int blocks = InterleavedBlocks[Size];
+		int blocks = InterleavedBlocksBySize[Size];
 		int totalCodewords = dataCodewords + blocks * errorCodewords;
 		// Initialize checkwords to zero.
 		for (int i = dataCodewords; i < totalCodewords; i++)
@@ -367,8 +367,8 @@ public class DataMatrixEncoder
 		/// Input.
 		byte[] codewords)
 	{
-		int matrixColumns = SymbolColumns[Size] - HorizontalRegions[Size] * 2;
-		int matrixRows = SymbolRows[Size] - VerticalRegions[Size] * 2;
+		int matrixColumns = SymbolColumnsBySize[Size] - HorizontalRegionsBySize[Size] * 2;
+		int matrixRows = SymbolRowsBySize[Size] - VerticalRegionsBySize[Size] * 2;
 		int column;
 		int row;
 		// Initialize modules to unset.
@@ -433,7 +433,7 @@ public class DataMatrixEncoder
 		int messageCodewords = EncodeMessage(message, codewords);
 		if (AutoSize)
 			FitSize(messageCodewords);
-		else if (messageCodewords > DataCodewords[Size])
+		else if (messageCodewords > DataCodewordsBySize[Size])
 			throw "Message too long for this symbol size";
 		PadCodewords(messageCodewords, codewords);
 		CalculateReedSolomonCode(codewords);
@@ -441,10 +441,10 @@ public class DataMatrixEncoder
 	}
 
 	/// Returns horizontal symbol size.
-	public int GetColumns() => SymbolColumns[Size];
+	public int GetColumns() => SymbolColumnsBySize[Size];
 
 	/// Returns vertical symbol size.
-	public int GetRows() => SymbolRows[Size];
+	public int GetRows() => SymbolRowsBySize[Size];
 
 	/// Returns module at the specified position.
 	/// For the standard "dark on light" scheme
@@ -457,14 +457,14 @@ public class DataMatrixEncoder
 		int row)
 		throws
 	{
-		int symbolColumns = SymbolColumns[Size];
-		int symbolRows = SymbolRows[Size];
+		int symbolColumns = SymbolColumnsBySize[Size];
+		int symbolRows = SymbolRowsBySize[Size];
 		if (column < 0 || column >= symbolColumns
 		 || row < 0 || row >= symbolRows)
 			throw "Coordinates out of bounds";
 
-		int regionColumns = symbolColumns / HorizontalRegions[Size];
-		int regionRows = symbolRows / VerticalRegions[Size];
+		int regionColumns = symbolColumns / HorizontalRegionsBySize[Size];
+		int regionRows = symbolRows / VerticalRegionsBySize[Size];
 
 		// Solid portion of alignment patterns.
 		if ((row + 1) % regionRows == 0
