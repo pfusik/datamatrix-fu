@@ -1,6 +1,6 @@
 ﻿This projects implements [Data Matrix barcode](http://en.wikipedia.org/wiki/Data_Matrix)
 in the [Ć programming language](https://github.com/pfusik/cito).
-Ć can be automatically translated to pure C, C++, Java, C# and JavaScript
+Ć can be automatically translated to pure C, C++, C#, Java, JavaScript and Python
 with no additional dependencies.
 
 Currently the project includes an encoder for all ECC 200 symbol sizes (square and rectangular).

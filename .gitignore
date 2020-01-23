@@ -1,7 +1,9 @@
-*.exe
-*.class
+/*.exe
+/*.class
+/__pycache__
 /datamatrix.c
 /datamatrix.h
 /datamatrix.cs
 /DataMatrixEncoder.java
 /datamatrix.js
+/datamatrix.py
