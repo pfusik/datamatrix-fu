@@ -1,7 +1,7 @@
 /*
  * dmaa.c - Data Matrix ASCII Art encoder
  *
- * Copyright (C) 2013  Piotr Fusik
+ * Copyright (C) 2013-2020  Piotr Fusik
  *
  * This file is part of DataMatrix.ci, see http://github.com/pfusik/datamatrix-ci
  *
@@ -24,31 +24,27 @@
 
 int main(int argc, char **argv)
 {
+	// Read standard input
 	char message[DataMatrixEncoder_MAX_MESSAGE_LENGTH];
-	size_t messageLength;
-	DataMatrixEncoder *encoder;
-	int columns;
-	int rows;
-	int row;
-
-	/* Read standard input */
-	messageLength = fread(message, 1, sizeof(message) - 1, stdin);
+	size_t messageLength = fread(message, 1, sizeof(message) - 1, stdin);
 	message[messageLength] = '\0';
 
-	/* Encode */
-	encoder = DataMatrixEncoder_New();
+	// Encode
+	DataMatrixEncoder *encoder = DataMatrixEncoder_New();
 	DataMatrixEncoder_Encode(encoder, message);
 
-	/* Print as ASCII Art */
-	columns = DataMatrixEncoder_GetColumns(encoder);
-	rows = DataMatrixEncoder_GetRows(encoder);
-	for (row = 0; row < rows; row++) {
-		int column;
-		for (column = 0; column < columns; column++) {
+	// Print as ASCII Art
+	int columns = DataMatrixEncoder_GetColumns(encoder);
+	int rows = DataMatrixEncoder_GetRows(encoder);
+	for (int row = 0; row < rows; row++) {
+		for (int column = 0; column < columns; column++) {
 			int module = DataMatrixEncoder_GetModule(encoder, column, row);
 			putchar(module ? '#' : ' ');
 		}
 		putchar('\n');
 	}
+
+	// Clean up
+	DataMatrixEncoder_Delete(encoder);
 	return 0;
 }
