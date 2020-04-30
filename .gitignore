@@ -1,9 +1,11 @@
 /*.exe
 /*.class
 /__pycache__
+/dmaa-swift
 /datamatrix.c
 /datamatrix.h
 /datamatrix.cs
 /DataMatrixEncoder.java
 /datamatrix.js
 /datamatrix.py
+/datamatrix.swift
