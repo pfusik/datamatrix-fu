@@ -1,6 +1,6 @@
 // DataMatrixEncoder.ci
 //
-// Copyright (C) 2013-2019  Piotr Fusik
+// Copyright (C) 2013-2021  Piotr Fusik
 //
 // This file is part of DataMatrix.ci, see http://github.com/pfusik/datamatrix-ci
 //
@@ -218,6 +218,12 @@ public class DataMatrixEncoder
 		}
 	}
 
+	/// Maximum horizontal symbol size.
+	public const int MaxColumns = 144;
+
+	/// Maximum vertical symbol size.
+	public const int MaxRows = 144;
+
 	const int MaxMatrixColumns = 132;
 	const int MaxMatrixRows = 132;
 
@@ -429,7 +435,7 @@ public class DataMatrixEncoder
 	public void Encode!(string message)
 		throws
 	{
-		byte[MaxMessageLength * 2] codewords; // worst case are all high-bit characters
+		byte[MaxMessageLength * 2] codewords; // worst case is all high-bit characters
 		int messageCodewords = EncodeMessage(message, codewords);
 		if (AutoSize)
 			FitSize(messageCodewords);

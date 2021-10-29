@@ -1,3 +1,10 @@
+CC = gcc
+CXX = g++
+CFLAGS = -s -O2 -Wall
+CXXFLAGS = -s -O2 -Wall
+
+TRANSPILED = datamatrix.c DataMatrixEncoder.java datamatrix.cs datamatrix.js datamatrix.py datamatrix.swift datamatrix.cl
+
 c: dmaa.exe
 	echo -n 'Hello, world!' | ./dmaa.exe
 
@@ -13,8 +20,11 @@ py: dmaa.py datamatrix.py
 swift: dmaa-swift
 	echo -n 'Hello, world!' | ./dmaa-swift
 
+cl: dmaa-cl.exe
+	echo -n 'Hello, world!' | ./dmaa-cl.exe
+
 dmaa.exe: dmaa.c datamatrix.c
-	gcc -s -O2 -Wall -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^
 
 DataMatrixAsciiArtEncoder.class: DataMatrixAsciiArtEncoder.java DataMatrixEncoder.java
 	javac $^
@@ -25,12 +35,18 @@ dmaa-cs.exe: dmaa.cs datamatrix.cs
 dmaa-swift: main.swift datamatrix.swift
 	swiftc -o $@ $^
 
-datamatrix.c DataMatrixEncoder.java datamatrix.cs datamatrix.js datamatrix.py datamatrix.swift: DataMatrixEncoder.ci
+dmaa-cl.exe: dmaa-cl.cpp datamatrix-cl.h datamatrix.c
+	$(CXX) $(CXXFLAGS) -o $@ $< -lOpenCL
+
+datamatrix-cl.h: datamatrix.cl dmaa-kernel.cl
+	(echo 'R"CLC(' && cat $^ && echo ')CLC"') >$@
+
+$(TRANSPILED): DataMatrixEncoder.ci
 	cito -o $@ $<
 
 clean:
-	rm -f dmaa.exe DataMatrixAsciiArtEncoder.class DataMatrixEncoder.class dmaa-cs.exe datamatrix.c datamatrix.cs datamatrix.js datamatrix.py datamatrix.swift
+	rm -f dmaa.exe DataMatrixAsciiArtEncoder.class DataMatrixEncoder.class dmaa-cs.exe dmaa-swift dmaa-cl.exe datamatrix-cl.h $(TRANSPILED)
 
-.PHONY: c java cs py clean
+.PHONY: c java cs py swift cl clean
 
 .DELETE_ON_ERROR:

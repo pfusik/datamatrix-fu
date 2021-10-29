@@ -2,6 +2,7 @@
 /*.class
 /__pycache__
 /dmaa-swift
+/datamatrix-cl.h
 /datamatrix.c
 /datamatrix.h
 /datamatrix.cs
@@ -9,3 +10,4 @@
 /datamatrix.js
 /datamatrix.py
 /datamatrix.swift
+/datamatrix.cl
