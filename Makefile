@@ -35,17 +35,19 @@ dmaa-cs.exe: dmaa.cs datamatrix.cs
 dmaa-swift: main.swift datamatrix.swift
 	swiftc -o $@ $^
 
-dmaa-cl.exe: dmaa-cl.cpp datamatrix-cl.h datamatrix.c
+dmaa-cl.exe: dmaa-cl.cpp datamatrix-cl.h datamatrix.h
 	$(CXX) $(CXXFLAGS) -o $@ $< -lOpenCL
 
 datamatrix-cl.h: datamatrix.cl dmaa-kernel.cl
 	(echo 'R"CLC(' && cat $^ && echo ')CLC"') >$@
 
+datamatrix.h: datamatrix.c
+
 $(TRANSPILED): DataMatrixEncoder.ci
 	cito -o $@ $<
 
 clean:
-	rm -f dmaa.exe DataMatrixAsciiArtEncoder.class DataMatrixEncoder.class dmaa-cs.exe dmaa-swift dmaa-cl.exe datamatrix-cl.h $(TRANSPILED)
+	rm -f dmaa.exe DataMatrixAsciiArtEncoder.class DataMatrixEncoder.class dmaa-cs.exe dmaa-swift dmaa-cl.exe datamatrix-cl.h datamatrix.h $(TRANSPILED)
 
 .PHONY: c java cs py swift cl clean
 
