@@ -1,5 +1,5 @@
 /*
- * dmaa-cl.c - Data Matrix ASCII Art encoder using OpenCL
+ * dmaa-cl.cpp - Data Matrix ASCII Art encoder using OpenCL
  *
  * Copyright (C) 2021  Piotr Fusik
  *
@@ -54,7 +54,7 @@ int main()
 
 	size_t size;
 	check_error(clGetDeviceInfo(device, CL_DEVICE_NAME, 0, nullptr, &size));
-	char *name = (char *) malloc(size);
+	char *name = static_cast<char *>(malloc(size));
 	check_error(clGetDeviceInfo(device, CL_DEVICE_NAME, size, name, nullptr));
 	fprintf(stderr, "Running on %s\n", name);
 	free(name);
