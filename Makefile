@@ -43,12 +43,15 @@ datamatrix-cl.h: datamatrix.cl dmaa-kernel.cl
 
 datamatrix.h: datamatrix.c
 
+browser: datamatrix.js
+	$(LOCALAPPDATA)/Programs/Opera/launcher --allow-file-access-from-files file:///$(shell cygpath -am html5datamatrix.html)
+
 $(TRANSPILED): DataMatrixEncoder.ci
 	cito -o $@ $<
 
 clean:
 	rm -f dmaa.exe DataMatrixAsciiArtEncoder.class DataMatrixEncoder.class dmaa-cs.exe dmaa-swift dmaa-cl.exe datamatrix-cl.h datamatrix.h $(TRANSPILED)
 
-.PHONY: c java cs py swift cl clean
+.PHONY: c java cs py swift cl browser clean
 
 .DELETE_ON_ERROR:

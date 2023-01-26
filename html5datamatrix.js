@@ -1,3 +1,5 @@
+import { DataMatrixEncoder } from "./datamatrix.js";
+
 function redraw()
 {
 	const message = document.getElementById("message").value;
@@ -28,3 +30,6 @@ function redraw()
 		status.className = "error";
 	}
 }
+
+document.getElementById("message").addEventListener("input", redraw);
+redraw();
