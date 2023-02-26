@@ -1,7 +1,7 @@
 /*
  * main.swift - Data Matrix ASCII Art encoder
  *
- * Copyright (C) 2020  Piotr Fusik
+ * Copyright (C) 2020-2023  Piotr Fusik
  *
  * This file is part of DataMatrix.ci, see http://github.com/pfusik/datamatrix-ci
  *
@@ -19,7 +19,7 @@
  * along with DataMatrix.ci.  If not, see http://www.gnu.org/licenses/
  */
 
-let message = readLine()
+let message = readLine()!
 let encoder = DataMatrixEncoder()
 try encoder.encode(message)
 
