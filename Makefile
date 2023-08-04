@@ -46,8 +46,8 @@ datamatrix.h: datamatrix.c
 browser: datamatrix.js
 	$(LOCALAPPDATA)/Programs/Opera/launcher --allow-file-access-from-files file:///$(shell cygpath -am html5datamatrix.html)
 
-$(TRANSPILED): DataMatrixEncoder.ci
-	cito -o $@ $<
+$(TRANSPILED): DataMatrixEncoder.fu
+	fut -o $@ $<
 
 clean:
 	rm -f dmaa.exe DataMatrixAsciiArtEncoder.class DataMatrixEncoder.class dmaa-cs.exe dmaa-swift dmaa-cl.exe datamatrix-cl.h datamatrix.h $(TRANSPILED)
