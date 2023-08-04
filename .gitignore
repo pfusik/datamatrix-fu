@@ -2,6 +2,8 @@
 /*.class
 /__pycache__
 /dmaa-swift
+/dmaa-swift.exp
+/dmaa-swift.lib
 /datamatrix-cl.h
 /datamatrix.c
 /datamatrix.h
