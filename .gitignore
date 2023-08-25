@@ -1,4 +1,5 @@
 /*.exe
+/*.obj
 /*.class
 /__pycache__
 /dmaa-swift
@@ -8,6 +9,7 @@
 /datamatrix.c
 /datamatrix.h
 /datamatrix.cs
+/datamatrix.d
 /DataMatrixEncoder.java
 /datamatrix.js
 /datamatrix.py

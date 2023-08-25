@@ -3,16 +3,19 @@ CXX = g++
 CFLAGS = -s -O2 -Wall
 CXXFLAGS = -s -O2 -Wall
 
-TRANSPILED = datamatrix.c DataMatrixEncoder.java datamatrix.cs datamatrix.js datamatrix.py datamatrix.swift datamatrix.cl
+TRANSPILED = datamatrix.c datamatrix.cs datamatrix.d DataMatrixEncoder.java datamatrix.js datamatrix.py datamatrix.swift datamatrix.cl
 
 c: dmaa.exe
 	echo -n 'Hello, world!' | ./dmaa.exe
 
-java: DataMatrixAsciiArtEncoder.class DataMatrixEncoder.class
-	echo -n 'Hello, world!' | java DataMatrixAsciiArtEncoder
-
 cs: dmaa-cs.exe
 	echo -n 'Hello, world!' | ./dmaa-cs.exe
+
+d: dmaa-d.exe
+	echo -n 'Hello, world!' | ./dmaa-d.exe
+
+java: DataMatrixAsciiArtEncoder.class DataMatrixEncoder.class
+	echo -n 'Hello, world!' | java DataMatrixAsciiArtEncoder
 
 py: dmaa.py datamatrix.py
 	echo -n 'Hello, world!' | python $<
@@ -26,11 +29,14 @@ cl: dmaa-cl.exe
 dmaa.exe: dmaa.c datamatrix.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-DataMatrixAsciiArtEncoder.class: DataMatrixAsciiArtEncoder.java DataMatrixEncoder.java
-	javac $^
-
 dmaa-cs.exe: dmaa.cs datamatrix.cs
 	csc -nologo -o+ -out:$@ $^
+
+dmaa-d.exe: dmaa.d datamatrix.d
+	dmd -of$@ -O -release $^
+
+DataMatrixAsciiArtEncoder.class: DataMatrixAsciiArtEncoder.java DataMatrixEncoder.java
+	javac $^
 
 dmaa-swift: main.swift datamatrix.swift
 	swiftc -o $@ $^
@@ -52,6 +58,6 @@ $(TRANSPILED): DataMatrixEncoder.fu
 clean:
 	rm -f dmaa.exe DataMatrixAsciiArtEncoder.class DataMatrixEncoder.class dmaa-cs.exe dmaa-swift dmaa-cl.exe datamatrix-cl.h datamatrix.h $(TRANSPILED)
 
-.PHONY: c java cs py swift cl browser clean
+.PHONY: c cs d java py swift cl browser clean
 
 .DELETE_ON_ERROR:
