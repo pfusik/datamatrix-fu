@@ -10,6 +10,7 @@
 /datamatrix.h
 /datamatrix.cs
 /datamatrix.d
+/DataMatrixArgumentException.java
 /DataMatrixEncoder.java
 /datamatrix.js
 /datamatrix.py

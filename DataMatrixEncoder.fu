@@ -1,8 +1,8 @@
 // DataMatrixEncoder.fu
 //
-// Copyright (C) 2013-2021  Piotr Fusik
+// Copyright (C) 2013-2023  Piotr Fusik
 //
-// This file is part of DataMatrix.fu, see http://github.com/pfusik/datamatrix-fu
+// This file is part of DataMatrix.fu, see https://github.com/pfusik/datamatrix-fu
 //
 // DataMatrix.fu is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -16,6 +16,11 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with DataMatrix.fu.  If not, see http://www.gnu.org/licenses/
+
+/// Exception thrown when a `DataMatrixEncoder` method is called with invalid input.
+public class DataMatrixArgumentException : Exception
+{
+}
 
 /// Encoder for an ECC 200 Data Matrix barcode.
 /// Usage:
@@ -60,7 +65,7 @@ public class DataMatrixEncoder
 		int columns,
 		/// Number of modules vertically.
 		int rows)
-		throws
+		throws DataMatrixArgumentException
 	{
 		for (int i = 0; i < Sizes; i++) {
 			if (SymbolColumnsBySize[i] == columns && SymbolRowsBySize[i] == rows) {
@@ -69,7 +74,7 @@ public class DataMatrixEncoder
 				return;
 			}
 		}
-		throw "Invalid size";
+		throw DataMatrixArgumentException("Invalid size");
 	}
 
 	/// Instructs `Encode` to select smallest symbol for message.
@@ -89,23 +94,23 @@ public class DataMatrixEncoder
 
 	/// Encodes `message` in `codewords`.
 	/// Returns number of used codewords.
-	static int EncodeMessage(
+	static uint EncodeMessage(
 		/// Message to encode.
 		string message,
 		/// Result.
 		byte[]! codewords)
-		throws
+		throws DataMatrixArgumentException
 	{
 		int messageLength = message.Length;
 		if (messageLength > MaxMessageLength)
-			throw "Message too long";
+			throw DataMatrixArgumentException("Message too long");
 
 		int j = 0;
 		for (int i = 0; i < messageLength; i++) {
 			int c = message[i];
 			if (c >= 128) {
 				if (c >= 256)
-					throw "Unsupported Unicode character";
+					throw DataMatrixArgumentException("Unsupported Unicode character");
 				codewords[j++] = 235;
 				codewords[j++] = c - 127;
 				continue;
@@ -127,7 +132,7 @@ public class DataMatrixEncoder
 	void FitSize!(
 		/// Number of codewords.
 		int usedCodewords)
-		throws
+		throws DataMatrixArgumentException
 	{
 		// Rectangular symbols have less codewords than square ones,
 		// so it is safe to always iterate over them.
@@ -137,7 +142,7 @@ public class DataMatrixEncoder
 				return;
 			}
 		}
-		throw "Message too long";
+		throw DataMatrixArgumentException("Message too long");
 	}
 
 	/// Adds padding to data codewords.
@@ -433,14 +438,14 @@ public class DataMatrixEncoder
 
 	/// Encodes the specified message.
 	public void Encode!(string message)
-		throws
+		throws DataMatrixArgumentException
 	{
 		byte[MaxMessageLength * 2] codewords; // worst case is all high-bit characters
 		int messageCodewords = EncodeMessage(message, codewords);
 		if (AutoSize)
 			FitSize(messageCodewords);
 		else if (messageCodewords > DataCodewordsBySize[Size])
-			throw "Message too long for this symbol size";
+			throw DataMatrixArgumentException("Message too long for this symbol size");
 		PadCodewords(messageCodewords, codewords);
 		CalculateReedSolomonCode(codewords);
 		FillMatrix(codewords);
@@ -456,18 +461,18 @@ public class DataMatrixEncoder
 	/// For the standard "dark on light" scheme
 	/// (with a dark L-shaped alignment pattern),
 	/// returns 0 for a light module and 1 for a dark module.
-	public int GetModule(
+	public 0 .. 1 GetModule(
 		/// Horizontal position, between 0 and `GetColumns()`.
 		int column,
 		/// Vertical position, between 0 and `GetRows()`.
 		int row)
-		throws
+		throws DataMatrixArgumentException
 	{
 		int symbolColumns = SymbolColumnsBySize[Size];
 		int symbolRows = SymbolRowsBySize[Size];
 		if (column < 0 || column >= symbolColumns
 		 || row < 0 || row >= symbolRows)
-			throw "Coordinates out of bounds";
+			throw DataMatrixArgumentException("Coordinates out of bounds");
 
 		int regionColumns = symbolColumns / HorizontalRegionsBySize[Size];
 		int regionRows = symbolRows / VerticalRegionsBySize[Size];
