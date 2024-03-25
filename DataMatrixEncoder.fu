@@ -65,6 +65,7 @@ public class DataMatrixEncoder
 		int columns,
 		/// Number of modules vertically.
 		int rows)
+		/// The requested size is invalid.
 		throws DataMatrixArgumentException
 	{
 		for (int i = 0; i < Sizes; i++) {
@@ -99,6 +100,7 @@ public class DataMatrixEncoder
 		string message,
 		/// Result.
 		byte[]! codewords)
+		/// The message is too long or contains invalid characters.
 		throws DataMatrixArgumentException
 	{
 		int messageLength = message.Length;
@@ -132,6 +134,7 @@ public class DataMatrixEncoder
 	void FitSize!(
 		/// Number of codewords.
 		int usedCodewords)
+		/// The message is too long.
 		throws DataMatrixArgumentException
 	{
 		// Rectangular symbols have less codewords than square ones,
@@ -438,6 +441,7 @@ public class DataMatrixEncoder
 
 	/// Encodes the specified message.
 	public void Encode!(string message)
+		/// The message is too long.
 		throws DataMatrixArgumentException
 	{
 		byte[MaxMessageLength * 2] codewords; // worst case is all high-bit characters
@@ -466,6 +470,7 @@ public class DataMatrixEncoder
 		int column,
 		/// Vertical position, between 0 and `GetRows()`.
 		int row)
+		/// The coordinates are out of bounds.
 		throws DataMatrixArgumentException
 	{
 		int symbolColumns = SymbolColumnsBySize[Size];
