@@ -14,7 +14,7 @@ cs: dmaa-cs.exe
 d: dmaa-d.exe
 	echo -n 'Hello, world!' | ./dmaa-d.exe
 
-java: DataMatrixAsciiArtEncoder.class DataMatrixEncoder.class
+java: DataMatrixAsciiArtEncoder.class
 	echo -n 'Hello, world!' | java DataMatrixAsciiArtEncoder
 
 py: dmaa.py datamatrix.py
