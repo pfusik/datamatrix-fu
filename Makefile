@@ -50,7 +50,7 @@ datamatrix-cl.h: datamatrix.cl dmaa-kernel.cl
 datamatrix.h: datamatrix.c
 
 browser: datamatrix.js
-	$(LOCALAPPDATA)/Programs/Opera/launcher --allow-file-access-from-files file:///$(shell cygpath -am html5datamatrix.html)
+	$(LOCALAPPDATA)/Programs/Opera/opera --allow-file-access-from-files file:///$(shell cygpath -am html5datamatrix.html)
 
 $(TRANSPILED): DataMatrixEncoder.fu
 	fut -o $@ $<
