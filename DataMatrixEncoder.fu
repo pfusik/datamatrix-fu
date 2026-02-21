@@ -1,6 +1,6 @@
 // DataMatrixEncoder.fu
 //
-// Copyright (C) 2013-2023  Piotr Fusik
+// Copyright (C) 2013-2026  Piotr Fusik
 //
 // This file is part of DataMatrix.fu, see https://github.com/pfusik/datamatrix-fu
 //
@@ -465,7 +465,7 @@ public class DataMatrixEncoder
 	/// For the standard "dark on light" scheme
 	/// (with a dark L-shaped alignment pattern),
 	/// returns 0 for a light module and 1 for a dark module.
-	public 0 .. 1 GetModule(
+	public byte GetModule(
 		/// Horizontal position, between 0 and `GetColumns()`.
 		int column,
 		/// Vertical position, between 0 and `GetRows()`.
